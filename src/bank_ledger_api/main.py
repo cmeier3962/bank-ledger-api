@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from bank_ledger.ledger import Ledger
 from bank_ledger.errors import LedgerError
-from .schemas import AccountCreate, AccountResponse, DepositRequest, WithdrawRequest
+from .schemas import AccountCreate, AccountResponse, DepositRequest, WithdrawRequest, BalanceResponse, TransactionReponse, ErrorResponse
 
 app = FastAPI(title="Bank Ledger API", version="0.1.0")
 
@@ -18,10 +18,10 @@ def create_account(data: AccountCreate):
     
 
 @app.get("/accounts/{name}/balance", response_model=AccountResponse)
-def get_balance(name: str):
+def get_balance(account_id: str):
     try:
-        balance = ledger.get_balance(name)
-        return {"name": name, "balance": balance}
+        balance = ledger.balance(account_id)
+        return BalanceResponse(account_id=account_id, balance=balance)
     except LedgerError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
