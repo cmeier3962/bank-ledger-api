@@ -88,3 +88,24 @@ def transfer(data: TransferRequest):
         )
     except LedgerError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+
+@app.get("/accounts/{account_id}/transactions", response_model=list[TransactionResponse])
+def transactions_for(account_id: str):
+    try:
+        txs = ledger.transactions_for(account_id)
+        
+        txns: list[TransactionResponse] = [
+                TransactionResponse(
+                    tx_id=tx.tx_id,
+                    account_id=tx.account_id,
+                    amount=float(tx.amount),
+                    timestamp=tx.timestamp
+                )
+                for tx in txs
+        ]
+        
+        return txns
+    except LedgerError as e:
+        # Used 404 instead of 400. Account does not exist (404) vs bad request (400)
+        raise HTTPException(status_code=404, detail=str(e))
