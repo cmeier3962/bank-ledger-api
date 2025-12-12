@@ -1,7 +1,17 @@
 from fastapi import FastAPI, HTTPException
 from bank_ledger.ledger import Ledger
+from bank_ledger.account import Account
 from bank_ledger.errors import LedgerError
-from .schemas import AccountCreate, AccountResponse, DepositRequest, WithdrawRequest, BalanceResponse, TransactionReponse, ErrorResponse
+
+from .schemas import (
+    AccountCreate,
+    AccountResponse,
+    AmountRequest,
+    BalanceResponse,
+    TransactionResponse,
+    TransferRequest,
+    TransferResponse
+)
 
 app = FastAPI(title="Bank Ledger API", version="0.1.0")
 
@@ -11,34 +21,70 @@ ledger = Ledger()
 @app.post("/accounts", response_model=AccountResponse)
 def create_account(data: AccountCreate):
     try:
-        ledger.create_account(data.name)
-        return {"name": data.name, "balance": ledger.get_balance(data.name)}
+        acct = Account(id=data.id, name=data.name, balance=data.initial_balance)
+        ledger.add_account(acct)
+        return AccountResponse(id=acct.id, name=acct.name, balance=acct.balance)
     except LedgerError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
 
-@app.get("/accounts/{name}/balance", response_model=BalanceResponse)
+
+@app.get("/accounts/{account_id}/balance", response_model=BalanceResponse)
 def get_balance(account_id: str):
     try:
         balance = ledger.balance(account_id)
-        return BalanceResponse(account_id=account_id, balance=balance)
+        return BalanceResponse(id=account_id, balance=balance)
     except LedgerError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@app.post("/accounts/{name}/deposit", response_model=AccountResponse)
-def deposit(name: str, data: DepositRequest):
+@app.post("/accounts/{account_id}/deposit", response_model=TransactionResponse)
+def deposit(account_id: str, data: AmountRequest):
     try:
-        new_balance = ledger.deposit(name, data.amount)
-        return {"name": name, "balance": new_balance}
+        tx = ledger.deposit(account_id, data.amount)
+
+        return TransactionResponse(
+            tx_id=tx.tx_id,
+            account_id=tx.account_id,
+            amount=float(tx.amount),
+            timestamp=tx.timestamp
+        )
     except LedgerError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.post("/accounts/{name}/withdraw", response_model=AccountResponse)
-def withdraw(name: str, data: WithdrawRequest):
+@app.post("/accounts/{account_id}/withdraw", response_model=TransactionResponse)
+def withdraw(account_id: str, data: AmountRequest):
     try:
-        new_balance = ledger.withdraw(name, data.amount)
-        return {"name": name, "balance": new_balance}
+        tx = ledger.withdraw(account_id, data.amount)
+        
+        return TransactionResponse(
+            tx_id=tx.tx_id,
+            account_id=tx.account_id,
+            amount=float(tx.amount),
+            timestamp=tx.timestamp
+        )
+    except LedgerError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/transfer", response_model=TransferResponse)
+def transfer(data: TransferRequest):
+    try:
+        wtx, dtx = ledger.transfer(data.from_id, data.to_id, data.amount)
+        
+        return TransferResponse(
+            withdraw=TransactionResponse(
+                tx_id=wtx.tx_id,
+                account_id=wtx.account_id,
+                amount=float(wtx.amount),
+                timestamp=wtx.timestamp
+                ),
+            deposit=TransactionResponse(
+                tx_id=dtx.tx_id,
+                account_id=dtx.account_id,
+                amount=float(dtx.amount),
+                timestamp=dtx.timestamp
+                )
+        )
     except LedgerError as e:
         raise HTTPException(status_code=400, detail=str(e))
