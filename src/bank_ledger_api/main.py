@@ -17,7 +17,7 @@ def create_account(data: AccountCreate):
         raise HTTPException(status_code=400, detail=str(e))
     
 
-@app.get("/accounts/{name}/balance", response_model=AccountResponse)
+@app.get("/accounts/{name}/balance", response_model=BalanceResponse)
 def get_balance(account_id: str):
     try:
         balance = ledger.balance(account_id)
