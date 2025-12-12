@@ -1,1 +1,4 @@
 -e .
+fastapi
+uvicorn[standard]
+bank-ledger @ git+https://github.com/cmeier3962/bank-ledger.git@main

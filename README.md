@@ -9,17 +9,18 @@ A minimal Python package scaffold using the `src/` layout.
 ## Repo layout
 
 ```
-your-project/
+bank-ledger-api/
 ├─ src/
-│  └─ your_project/
+│  └─ bank_ledger_api/
 │     ├─ __init__.py
-│     └─ __main__.py
+│     ├─ main.py          # FastAPI app lives here
+│     ├─ schemas.py       # Pydantic models (request/response)
+│     └─ deps.py          # (Optional) shared dependencies like Ledger()
+├─ pyproject.toml         # or requirements.txt, like your other repos
 ├─ scripts/
-│  └─ smoke_test.py
-├─ .gitignore
-├─ pyproject.toml
-├─ requirements.txt
+│  └─ dev_server.ps1      # optional helper script for uvicorn
 └─ README.md
+
 ```
 
 ## Requirements
