@@ -10,3 +10,11 @@ class AccountResponse(BaseModel):
     id: str
     name: str | None = None
     balance: float
+
+
+class DepositRequest(BaseModel):
+    amount: float
+    
+
+class WithdrawRequest(BaseModel):
+    amount: float
